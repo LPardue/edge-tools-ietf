@@ -8,7 +8,7 @@ I pity the tools!
 
 A pretty simple Cloudflare Workers script to speed up access to resources on tools.ietf.org. For example, try visiting https://tools-ietf-org.lucaspardue.com/html/rfc7540 a couple of times with local caching disabled and see how much faster life can be when modern edge capabilities are harnessed.
 
-Most paths on tools are probably supported but I've only supported viewing I-Ds and RFCs. Chances are other stuff could act funky, if so ping me and just fallback if needs be.
+Most paths on tools are probably supported but I've only tested viewing I-Ds and RFCs. Chances are other stuff could act funky, if so ping me and just fallback if needs be.
 
 ## Status and Detail
 
