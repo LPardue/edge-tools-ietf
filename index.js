@@ -32,11 +32,29 @@ async function handleRequest(event) {
   // Try to find the cache key in the cache.
   // If it's not there, then we'll fetch it
   // and optionally transform.
-  let cache = caches.default
-  response = await cache.match(event.request)
+  let cache = caches.default;
+  response = await cache.match(event.request);
+  if (response) {
+    // Make the headers mutable by re-constructing the Response.
+    response = new Response(response.body, response)
+    response.headers.set("edge-tools-ietf", "from-cache");
+  }
 
   if (!response) {
+    // Look it up in the KV store
+    console.log(url.toString());
+    const value = await IETF.get(url.toString());
+    if (value) {
+      response = new Response(value, { headers: {"content-type": "text/html;charset=UTF-8", "edge-tools-ietf": "from-kv"}, })
+      let newResponse = rewriter.transform(response);
+      event.waitUntil(cache.put(event.request, newResponse.clone()));
+      return newResponse
+    }
+
     response = await fetch(url,event.request);
+    // Make the headers mutable by re-constructing the Response.
+    response = new Response(response.body, response)
+    response.headers.set("edge-tools-ietf", "from-origin");
 
     if (rfcEditor == true) {
       if (url.pathname.endsWith(".json")) {
@@ -57,6 +75,20 @@ async function handleRequest(event) {
       event.waitUntil(cache.put(event.request, newResponse.clone()));
       return newResponse
     } else {
+      // When hitting an I-D without a version, tools.ietf.org will return
+      // a redirect. We'll rewrite the redirect URLs to point to the edge-tools.
+      if (response.status == 302) {
+        let loc = response.headers.get('Location');
+        if (loc) {
+          let newLoc = loc.replace('tools.ietf.org','tools-ietf-org.lucaspardue.com');
+          response.headers.set('Location', newLoc);
+
+          let newResponse = redirectRewriter.transform(response);
+          event.waitUntil(cache.put(event.request, newResponse.clone()));
+          return newResponse
+        }
+      }
+
       let newResponse = rewriter.transform(response);
       event.waitUntil(cache.put(event.request, newResponse.clone()));
       return newResponse
@@ -83,6 +115,24 @@ class AttributeRewriter {
             attribute.replace(found, 'www-rfc-editor-org.lucaspardue.com')
           )
         }
+    }
+  }
+}
+
+class RedirectAttributeRewriter {
+  constructor(attributeName) {
+	    this.attributeName = attributeName
+  }
+
+  element(element) {
+    const attribute = element.getAttribute(this.attributeName);
+    if (attribute) {
+
+          element.setAttribute(
+            this.attributeName,
+            attribute.replace('tools.ietf.org', 'tools-ietf-org.lucaspardue.com')
+          )
+
     }
   }
 }
@@ -120,6 +170,10 @@ class ElementRemover {
 
 const dumbCssRemover = new HTMLRewriter()
   .on('link[href="rfc-local.css"]', new ElementRemover());
+
+
+const redirectRewriter = new HTMLRewriter()
+  .on('a', new RedirectAttributeRewriter('href'))
 
 addEventListener('fetch', event => {
   event.respondWith(handleRequest(event))
