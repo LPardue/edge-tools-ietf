@@ -4,7 +4,7 @@ Speeding up access to resources on tools.ietf.org and www.rfc-editor.org.
 
 I pity the tools!
 
-![pity](pity.jpg | width=100)
+<img src="https://github.com/LPardue/edge-tools-ietf/blob/main/pity.jpg" width="100">
 
 # Description
 
