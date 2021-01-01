@@ -4,7 +4,7 @@ Speeding up access to resources on tools.ietf.org and www.rfc-editor.org.
 
 I pity the tools!
 
-![pity](pity.jpg)
+![pity](pity.jpg | width=100)
 
 # Description
 
@@ -41,6 +41,7 @@ edge-tools-ietf by passing an environment variable
 $ XML_RESOURCE_ORG_PREFIX=https://xml2rfc-tools-ietf-org.lucaspardue.com/public/rfc make
 ```
 
+alternatively, you can also modify the same entry in your project's `config.mk`.
 
 # Converting Hosts
 
@@ -56,14 +57,31 @@ substitute hosts:
 | www.rfc-editor.org  | www-rfc-editor-org.lucaspardue.com  |
 
 Most paths on tools are probably supported but I've mainly focused on access to
-HTML versions o Internet-Drats and RFCs. Chances are other stuff could act
+HTML versions of Internet-Drafts and RFCs. Chances are other stuff could act
 funky, if so ping me and just fallback if needs be.
+
+# How it Works
+
+There's not really much that is clever or custom going on. When a request hits
+the worker, we check if the resource is stored in the edge cache. If it's not,
+we check a small, always warm KV store and then promote that into cache.
+Finally, if there are two misses, we fetch from the origin and put it in cache.
+
+We use the
+[Cache API](https://developers.cloudflare.com/workers/runtime-apis/cache),
+[KV API](https://developers.cloudflare.com/workers/runtime-apis/kv) and
+[Fetch API](https://developers.cloudflare.com/workers/runtime-apis/fetch).
+
+The KV store is prepopulated using [Worker Cron Triggers](https://developers.cloudflare.com/workers/platform/cron-triggers).
+
+Since we're rewritting URLs, we need to tweak response payload a bit. We do this
+inline using the [HTMLRewriter API](https://developers.cloudflare.com/workers/runtime-apis/html-rewriter).
 
 ## Status and Detail
 
-This is early days. So far the worker is hardcoded to:
+This is still early days. The worker is hardcoded to do a lot of things and be
+hosted on lucaspardue.com. Future work should make the code more portable so
+others can experiment more easily.
 
-1) Do reverse substitution using the details above.
-2) Check the local edge cache for a copy and return it, or
-3) Fetch the canonical copy from origin, rewrite some things (like links to RFC editor documents_, cache that version in the local edge cache.
-4) Return the resource.
+Testing has been limited, so feature requests or bug reports are welcome.
+
