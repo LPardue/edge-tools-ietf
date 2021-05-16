@@ -126,6 +126,7 @@ class RedirectAttributeRewriter {
 
   element(element) {
     const attribute = element.getAttribute(this.attributeName);
+
     if (attribute) {
 
           element.setAttribute(
@@ -137,9 +138,31 @@ class RedirectAttributeRewriter {
   }
 }
 
+class appendCSS {
+	element(element){
+		element.append(`
+			<style>
+			@media (prefers-color-scheme: dark){
+				body {
+					color: #eee;
+					background: #121212;
+				}
+				.docinfo {
+					background: #121212;
+				}
+				a {
+					color: #0ea7e7;
+				}
+			}
+			</style>
+		`, {html: true});
+	}
+}
+
 const rewriter = new HTMLRewriter()
   .on('a', new AttributeRewriter('href'))
   .on('img', new AttributeRewriter('src'))
+  .on('head', new appendCSS())
 
 class RfcEdAttributeRewriter {
   constructor(attributeName) {
