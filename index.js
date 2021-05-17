@@ -1,7 +1,7 @@
 async function handleRequest(event) {
   let url = new URL(event.request.url);
 
-  let pattern = /(tools-ietf-org|xml2rfc-tools-ietf-org|www-rfc-editor-org|tools-ietf-production).(lucaspardue.com|lucas.workers.dev)/;
+  let pattern = /(datatracker-ietf-org|tools-ietf-org|xml2rfc-tools-ietf-org|www-rfc-editor-org|tools-ietf-production).(lucaspardue.com|lucas.workers.dev)/;
 
   const found = url.hostname.match(pattern);
 
@@ -80,7 +80,7 @@ async function handleRequest(event) {
       if (response.status == 302) {
         let loc = response.headers.get('Location');
         if (loc) {
-          let newLoc = loc.replace('tools.ietf.org','tools-ietf-org.lucaspardue.com');
+          let newLoc = loc.replace('datatracker.ietf.org','datatracker-ietf-org.lucaspardue.com');
           response.headers.set('Location', newLoc);
 
           let newResponse = redirectRewriter.transform(response);
@@ -150,6 +150,9 @@ class appendCSS {
 				.docinfo {
 					background: #121212;
 				}
+        .table-striped {
+          background: #1e1e1e;
+        }
 				a {
 					color: #0ea7e7;
 				}
