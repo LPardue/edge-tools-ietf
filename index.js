@@ -75,6 +75,10 @@ async function handleRequest(event) {
       event.waitUntil(cache.put(event.request, newResponse.clone()));
       return newResponse
     } else {
+      if (event.request.method != "GET") {
+        return response
+      }
+
       // When hitting an I-D without a version, tools.ietf.org will return
       // a redirect. We'll rewrite the redirect URLs to point to the edge-tools.
       if (response.status == 302) {
